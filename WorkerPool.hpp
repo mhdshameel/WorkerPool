@@ -13,6 +13,7 @@ class WorkerPool
 {
 public:
 
+	#pragma region Special member functions
 	WorkerPool(unsigned int capacity = 0) : is_ready(0), cancel_flag(false), available_workers(0)
 	{
 		pull_task_signal = std::make_unique<std::counting_semaphore<100>>(0);
@@ -23,7 +24,10 @@ public:
 			_threads.emplace_back(&WorkerPool::routine, this);
 		}
 	}
-
+	WorkerPool(const WorkerPool&) = delete; //cant allow copy as std::thread doesn't allow copy 
+	WorkerPool(WorkerPool&&) = default;
+	WorkerPool& operator = (const WorkerPool&) = delete;
+	WorkerPool& operator = (WorkerPool&&) = default;
 	~WorkerPool()
 	{
 		cancel_flag = true;
@@ -35,6 +39,7 @@ public:
 			t.join();
 		}
 	}
+	#pragma endregion
 
 	[[nodiscard]] bool IsWorkersAvailable() { return is_ready && (available_workers.load() > 0); };
 
