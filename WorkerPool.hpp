@@ -95,7 +95,11 @@ void WorkerPool::routine() noexcept
 
 			std::unique_lock lk(tq_mx);
 			available_workers--;
-			auto tasks = std::move(task_queue.front());
+			auto tasks = std::exchange(task_queue.front(), {});
+			/*
+			The use of std::exchange ensures the task_queue's front element is accessed atomically and 
+			any potential data races between threads accessing task_queue are avoided
+			*/
 			task_queue.pop();
 			lk.unlock();
 
@@ -105,7 +109,7 @@ void WorkerPool::routine() noexcept
 			//call the completion callback
 			tasks.second();
 		}
-		catch (std::exception ex)
+		catch (const std::exception& ex)
 		{
 
 		}
