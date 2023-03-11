@@ -13,7 +13,7 @@ class WorkerPool
 {
 public:
 	#pragma region Special member functions
-	WorkerPool(unsigned int capacity = std::thread::hardware_concurrency()) : is_ready(0), cancel_flag(false), available_workers(0)
+	WorkerPool(unsigned int capacity = std::thread::hardware_concurrency()) : capacity(capacity), is_ready(0), cancel_flag(false), available_workers(0)
 	{
 		pull_task_signal = std::make_unique<std::counting_semaphore<100>>(0);
 		_threads.reserve(this->capacity);
@@ -97,7 +97,7 @@ void WorkerPool::routine() noexcept
 			available_workers--;
 			auto tasks = std::exchange(task_queue.front(), {});
 			/*
-			The use of std::exchange ensures the task_queue's front element is accessed atomically and 
+			The use of std::exchange ensures the task_queue's front element is accessed atomically and
 			any potential data races between threads accessing task_queue are avoided
 			*/
 			task_queue.pop();
