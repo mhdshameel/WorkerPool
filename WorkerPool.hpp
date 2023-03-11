@@ -7,17 +7,15 @@
 #include <functional>
 #include <semaphore>
 
-typedef std::function<void()> Task;
+using Task = std::function<void()>;
 
 class WorkerPool
 {
 public:
-
 	#pragma region Special member functions
-	WorkerPool(unsigned int capacity = 0) : is_ready(0), cancel_flag(false), available_workers(0)
+	WorkerPool(unsigned int capacity = std::thread::hardware_concurrency()) : is_ready(0), cancel_flag(false), available_workers(0)
 	{
 		pull_task_signal = std::make_unique<std::counting_semaphore<100>>(0);
-		this->capacity = capacity ? capacity : std::thread::hardware_concurrency();
 		_threads.reserve(this->capacity);
 		for (unsigned int i = 0; i < this->capacity; i++)
 		{
@@ -31,18 +29,17 @@ public:
 	~WorkerPool()
 	{
 		cancel_flag = true;
-		pull_task_signal->release(100);
+		pull_task_signal->release(task_queue.size());
 
 		//This is necessary, otherwise the abort is called. you can see in the std::thread's dtor
 		for (auto& t : _threads)
 		{
-			//detach as it is not needed to unnecessarily block after setting the cancel signal, let the threads end on it's own
 			t.detach();
 		}
 	}
 	#pragma endregion
 
-	[[nodiscard]] bool IsWorkersAvailable() { return is_ready && (available_workers.load() > 0); };
+	[[nodiscard]] bool IsWorkersAvailable() { return is_ready && (available_workers > 0); };
 
 	/*
 	* Adds tasks to the internal queue. If workers are available immediately the task will be executed
@@ -71,13 +68,14 @@ private:
 
 	std::queue<std::pair<Task, Task>> task_queue;
 	std::mutex tq_mx;
+	/*
+	* The use of unique_ptr here:
+	* I was not able to use direct counting_semaphore as semaphore's copy ctor and copy assignment operators are deleted explicitly
+	* */
 	std::unique_ptr<std::counting_semaphore<max_threads>> pull_task_signal;
 	/*
-	* Not able to use condtion variable instead of semaphore for signalling the threads to pull tasks because of the following:
-	* Only the threads which are waiting can be notified when using cv.
-	* and sometimes we can have in this order: task addition to queue and notifying of cv then waiting on cv
-	* All this can be solved with semaphore
-	* But I have assumed the 
+	* Not able to use condtion variable instead of semaphore for signalling the threads to pull tasks because of the lost wakeups
+	* because sometimes we can have in this order: task addition to queue and then waiting on cv
 	* */
 	std::once_flag _isready_onceflag;
 	std::atomic<int> available_workers;
