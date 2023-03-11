@@ -36,7 +36,8 @@ public:
 		//This is necessary, otherwise the abort is called. you can see in the std::thread's dtor
 		for (auto& t : _threads)
 		{
-			t.join();
+			//detach as it is not needed to unnecessarily block after setting the cancel signal, let the threads end on it's own
+			t.detach();
 		}
 	}
 	#pragma endregion
