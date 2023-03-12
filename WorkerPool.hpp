@@ -29,12 +29,12 @@ public:
 	~WorkerPool()
 	{
 		cancel_flag = true;
-		pull_task_signal->release(task_queue.size());
+		pull_task_signal->release(_threads.size());
 
 		//This is necessary, otherwise the abort is called. you can see in the std::thread's dtor
 		for (auto& t : _threads)
 		{
-			t.detach();
+			t.join();
 		}
 	}
 	#pragma endregion
@@ -49,7 +49,7 @@ public:
 	* task_to_run - This is the task to be executed. Any callable of signature void() will be accepted
 	* callback_when_complete - Calls this once the task is completed.
 	* */
-	void AddTaskForExecution(Task&& task_to_run, Task&& callback_when_complete)
+	void AddTaskForExecution(Task&& task_to_run, Task&& callback_when_complete = Task{})
 	{
 		std::unique_lock lk(tq_mx);
 		task_queue.emplace(std::make_pair(task_to_run, callback_when_complete));
@@ -69,7 +69,7 @@ private:
 	std::queue<std::pair<Task, Task>> task_queue;
 	std::mutex tq_mx;
 	/*
-	* The use of unique_ptr here:
+	* The use of ptr here:
 	* I was not able to use direct counting_semaphore as semaphore's copy ctor and copy assignment operators are deleted explicitly
 	* */
 	std::unique_ptr<std::counting_semaphore<max_threads>> pull_task_signal;
