@@ -26,6 +26,11 @@ public:
 	WorkerPool(WorkerPool&&) = default;
 	WorkerPool& operator = (const WorkerPool&) = delete;
 	WorkerPool& operator = (WorkerPool&&) = default;
+	/*
+	* As soon as the object's destructor is invoked, the cancel signal is issued to all the worker threads.
+	* And it will block till the current task of execution is completed
+	* It is upto to the consumer of the library to not assign long blocking tasks
+	* */
 	~WorkerPool()
 	{
 		cancel_flag = true;
