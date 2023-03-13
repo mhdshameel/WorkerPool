@@ -95,8 +95,12 @@ void WorkerPool::routine() noexcept
 		available_workers++;
 		try
 		{
-			pull_task_signal->acquire();
-			if (cancel_flag) return;
+			if (!cancel_flag)
+			{
+				pull_task_signal->acquire();
+			}
+
+			if (cancel_flag && task_queue.empty()) return;
 
 			std::unique_lock lk(tq_mx);
 			available_workers--;
