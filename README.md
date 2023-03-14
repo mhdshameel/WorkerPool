@@ -10,6 +10,8 @@ WorkerPool is a header-only C++ library for managing a pool of worker threads th
  * Threadsafe - The library is threadsafe itself and can be accessed concurrently from multiple threads without a worry. 
  * Clean shutdown: The library provides a clean shutdown mechanism that allows tasks to complete before terminating worker threads.
  * Header-only: The library is implemented entirely in header files, making it easy to integrate into existing projects.
+ 
+Check the `lite` branch for only the header file without other Windows project management stuffs. I will try to keep the lite branch updated.
 
 ### Usage
 Here's a simple example of how to use the WorkerPool library:
@@ -37,7 +39,7 @@ void AdditionTask(int a, int b)
 int main()
 {
     // create a worker pool with default capacity (hardware concurrency)
-    WorkerPool pool;
+    ms::WorkerPool pool;
 
     // add two tasks to the pool
     pool.AddTaskForExecution(task1);
