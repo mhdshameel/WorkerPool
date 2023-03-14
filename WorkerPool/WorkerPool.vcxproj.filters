@@ -7,7 +7,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="WorkerPool.h">
+    <ClInclude Include="WorkerPool.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
