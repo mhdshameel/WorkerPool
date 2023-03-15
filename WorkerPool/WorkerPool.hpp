@@ -15,7 +15,7 @@ namespace ms
 	class WorkerPool
 	{
 	public:
-#pragma region Special member functions
+		#pragma region Special member functions
 		WorkerPool(unsigned int capacity = std::thread::hardware_concurrency()) : capacity(capacity), is_ready(0), cancel_flag(false), available_workers(0)
 		{
 			assert(capacity <= max_threads);
@@ -46,9 +46,13 @@ namespace ms
 				t.join();
 			}
 		}
-#pragma endregion
+		#pragma endregion
 
 		[[nodiscard]] bool IsWorkersAvailable() { return is_ready && (available_workers > 0); };
+
+		[[nodiscard]] bool AreAllWorkersAvailable() {
+			return available_workers == capacity;
+		}
 
 		/*
 		* Adds tasks to the internal queue. If workers are available immediately the task will be executed
