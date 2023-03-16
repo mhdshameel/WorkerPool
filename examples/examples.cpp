@@ -1,11 +1,15 @@
 #include "SimpleExamples.h"
 #include <future>
-
+#include "Benchmark.h"
+#include "ArraySumParallel.h"
 
 int main()
 {
-    UsageExampleWithCalllback();
 
+    //UsageExampleWithCalllback();
+    ArraySumParallelMainRoutine();
+
+    std::cin.get();
     return 0;
 }
 
