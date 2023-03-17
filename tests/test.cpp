@@ -126,11 +126,7 @@ TEST(WorkerPoolTests, FuturesWaitTests)
     }
 
     // wait for all tasks to complete
-    //std::for_each(futures.begin(), futures.end(), [](auto& f) { f.wait();});
-
-    while (std::any_of(futures.begin(), futures.end(), [](auto& f) { f.wait(); return true; })) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    std::for_each(futures.begin(), futures.end(), [](auto& f) { f.wait();});
 
     EXPECT_EQ(counter, 10);
 }
