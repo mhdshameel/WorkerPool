@@ -42,10 +42,9 @@ long long ArraySumParallelThreadPool(const std::vector<int>& nums, unsigned int 
 	//auto sum = std::make_shared<long long>(0ll);
 	auto sum = 0ll;
 	std::vector<std::shared_ptr<long long>> results;
+	std::vector<std::future<void>> futures;
 	results.reserve(20); //just for performance benefits, since shared_ptrs are used we need not worry about vector reallocation and reference invalidations
-
-	std::counting_semaphore<25> CalculationCompletionSignal(0);
-
+	
 	{
 		PROFILE_SCOPE("ArraySumParallelThreadPool only calculation");
 		int i = 0;
@@ -58,7 +57,7 @@ long long ArraySumParallelThreadPool(const std::vector<int>& nums, unsigned int 
 
 			results.emplace_back(std::make_shared<long long>(0ll));
 			
-			threadpool.AddTaskForExecution(std::bind(process_chunk, start, end, results[i++]), [&CalculationCompletionSignal]() { CalculationCompletionSignal.release(); });
+			futures.emplace_back(threadpool.AddTaskForExecution(std::bind(process_chunk, start, end, results[i++])));
 			/*
 			* Bind can be used as above or a lambda capturing all the required objects can be used as well, for example 
 			* [&process_chunk, start, end, &results, i]() { process_chunk(start, end, results[i]); }
@@ -67,9 +66,9 @@ long long ArraySumParallelThreadPool(const std::vector<int>& nums, unsigned int 
 		}
 
 		//wait for all the tasks to complete
-		std::for_each(results.begin(), results.end(), [&CalculationCompletionSignal](auto& val) { CalculationCompletionSignal.acquire(); });
+		std::for_each(futures.begin(), futures.end(), [](auto& f) { f.wait(); });
 
-		//calculate the individual results
+		//add the individual chunk results
 		std::for_each(results.begin(), results.end(), [&sum](auto& val) { sum += *val; });
 	}
 	return sum;
