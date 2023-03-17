@@ -7,6 +7,8 @@
 #include <functional>
 #include <semaphore>
 #include <assert.h>
+#include <future>
+#include <tuple>
 
 namespace ms
 {
@@ -56,18 +58,21 @@ namespace ms
 
 		/*
 		* Adds tasks to the internal queue. If workers are available immediately the task will be executed
-		* If ready workers are not available, the tasks will be executed when anyone worker thread is ready.
+		* If ready workers are not available, the tasks will be executed when any one worker thread is ready.
 		*
 		* Params:
 		* task_to_run - This is the task to be executed. Any callable of signature void() will be accepted
 		* callback_when_complete - Calls this once the task is completed.
 		* */
-		void AddTaskForExecution(Task&& task_to_run, Task&& callback_when_complete = Task{})
+		std::future<void> AddTaskForExecution(Task&& task_to_run, Task &&callback_when_complete = Task{})
 		{
+			std::promise<void> task_promise;
+			auto fut = task_promise.get_future();
 			std::unique_lock lk(tq_mx);
-			task_queue.emplace(std::make_pair(task_to_run, callback_when_complete));
+			task_queue.emplace(std::make_tuple(task_to_run, callback_when_complete, std::move(task_promise)));
 			lk.unlock();
 			pull_task_signal->release();
+			return fut;
 		}
 
 	private:
@@ -79,7 +84,7 @@ namespace ms
 
 		void routine() noexcept;
 
-		std::queue<std::pair<Task, Task>> task_queue;
+		std::queue<std::tuple<Task, Task, std::promise<void>>> task_queue;
 		std::mutex tq_mx;
 
 		/*
@@ -112,7 +117,7 @@ namespace ms
 				std::unique_lock lk(tq_mx);
 				available_workers--;
 				if (task_queue.empty()) continue;
-				auto tasks = std::exchange(task_queue.front(), {});
+				auto [payload, completion_callback, payload_promise] = std::exchange(task_queue.front(), {});
 				/*
 				The use of std::exchange ensures the task_queue's front element is accessed atomically and
 				any potential data races between threads accessing task_queue are avoided
@@ -122,10 +127,12 @@ namespace ms
 				lk.unlock();
 
 				//execute the work assigned
-				tasks.first();
+				payload();
+
+				payload_promise.set_value();
 
 				//call the completion callback
-				tasks.second();
+				completion_callback();
 			}
 			catch (const std::exception& ex)
 			{

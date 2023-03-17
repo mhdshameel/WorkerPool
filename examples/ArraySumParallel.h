@@ -79,7 +79,7 @@ void ArraySumParallelMainRoutine()
 {
 	START_CONSOLE_SESSION("Array Parallel vs sequential");
 
-	constexpr unsigned int N = 500'000'000;
+	constexpr unsigned int N = 1'000'000'000;
 	std::cout << "N is " << N << std::endl;
 	std::vector<int> nums(N);
 	std::generate(nums.begin(), nums.end(), [n = 0]() mutable { return ++n; });
@@ -105,6 +105,7 @@ void ArraySumParallelMainRoutine()
 //|     1'000'000 | 131.6 | 25.9 | 68.2 |
 //|     10'000'000 | 949 | 209 | 272 |
 //|     10'000'000 | 844 | 230 | 301 |
+//Almost 5 times reduction in calculation times
 
 //RELEASE benchmark readings
 //| Array Size | Sequential calculation time(ms) | `ms::WorkerPool` time parallel calculation | `ms::WorkerPool` time calc + threads(12) initiation
@@ -115,5 +116,7 @@ void ArraySumParallelMainRoutine()
 //|     10'000'000 | 7ms | 2.4ms | 25.6ms |
 //|     100'000'000 | 67.7ms | 30.3ms | 41ms |
 //|     100'000'000 | 40ms | 28ms | 48.7ms |
-//|     1'000'000'000 | 40ms | 28ms | 48.7ms |
-//|     1'000'000'000 | 40ms | 28ms | 48.7ms |
+//|     500'000'000 | 185ms | 104ms | 110ms |
+//|     500'000'000 | 233ms | 112ms | 119ms |
+//|		1'000'000'000 | 622ms | 267ms | 290ms |
+//|		1'000'000'000 | 507ms | 225ms | 242ms |

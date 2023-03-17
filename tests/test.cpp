@@ -111,6 +111,31 @@ TEST(WorkerPoolTests, PoolThreadSafetyTest1)
     EXPECT_EQ(counter, N * N);
 }
 
+TEST(WorkerPoolTests, FuturesWaitTests)
+{
+    ms::WorkerPool pool;
+    std::vector<std::future<void>> futures;
+    std::atomic<int> counter(0);
+
+    // submit 10 tasks to the thread pool
+    for (int i = 0; i < 10; ++i) {
+        futures.emplace_back(pool.AddTaskForExecution([&counter]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            counter++;
+            }));
+    }
+
+    // wait for all tasks to complete
+    //std::for_each(futures.begin(), futures.end(), [](auto& f) { f.wait();});
+
+    while (std::any_of(futures.begin(), futures.end(), [](auto& f) { f.wait(); return true; })) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    EXPECT_EQ(counter, 10);
+}
+
+
 TEST(WorkerPoolTests, 1000ThreadsTest)
 {
     std::atomic<int> counter(0);
