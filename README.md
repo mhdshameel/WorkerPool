@@ -23,6 +23,7 @@ Here's a simple example of how to use the WorkerPool library:
 
 void task1()
 {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     std::cout << "Task 1 executed" << std::endl;
 }
 
@@ -42,11 +43,12 @@ int main()
     ms::WorkerPool pool;
 
     // add two tasks to the pool
-    pool.AddTaskForExecution(task1);
-    pool.AddTaskForExecution(task2, [](){std::cout << "Task 2 executed" << std::endl;});
+    auto fut1 = pool.AddTaskForExecution(task1);
+    auto fut2 = pool.AddTaskForExecution(task2, [](){std::cout << "Task 2 executed" << std::endl;}); //optionally you can add a callback to be called once the task completes
 
     // wait for tasks to complete
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    fut1.wait();
+    fut2.wait();
 
     return 0;
 }
