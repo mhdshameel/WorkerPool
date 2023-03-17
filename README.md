@@ -32,11 +32,6 @@ void task2()
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 }
 
-void AdditionTask(int a, int b)
-{
-    
-}
-
 int main()
 {
     // create a worker pool with default capacity (hardware concurrency)
@@ -53,6 +48,8 @@ int main()
     return 0;
 }
 ```
+
+The `examples` folder contains more sophisticated examples showcasing the usage of the different features in play.
 
 ### Building
 The WorkerPool library is implemented entirely in header files, so there is no need to build or link against any external libraries. Simply include the header file in your source code, and you're ready to go. C++20 and above is required (another version of the library targeting C++17 or lower in a separate branch will be ready soon).
