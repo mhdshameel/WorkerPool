@@ -23,6 +23,11 @@ void task3()
     std::cout << "Task 3 finished on thread " << std::this_thread::get_id() << std::endl;
 }
 
+void AdditionTask(int a, int b)
+{
+    std::cout << a + b << std::endl;
+}
+
 void UsageExampleWithCalllback()
 {
     ms::WorkerPool pool(2); // create a pool with 2 worker threads
@@ -41,7 +46,15 @@ void UsageExampleWithCalllback()
         std::cout << "Callback for task 2 on thread " << std::this_thread::get_id() << std::endl;
         });
 
-    pool.AddTaskForExecution(task3, []() {
+    auto task3_fut = pool.AddTaskForExecution(task3, []() {
         std::cout << "Callback for task 3 on thread " << std::this_thread::get_id() << std::endl;
         });
-}
+
+    auto addition_fut = pool.AddTaskForExecution(std::bind(AdditionTask, 10, 20));
+
+    //explicit wait on task completion:
+    //if any other handling has to be done after task execution, the returned future object can be used to be waited on like following
+    task3_fut.wait();
+    addition_fut.wait();
+
+}//implicitly blocks here until all the other tasks are completed

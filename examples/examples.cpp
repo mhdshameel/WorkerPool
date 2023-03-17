@@ -25,8 +25,8 @@ void UsingFutures()
 int main()
 {
     //UsingFutures();
-    //UsageExampleWithCalllback();
-    ArraySumParallelMainRoutine();
+    UsageExampleWithCalllback();
+    //ArraySumParallelMainRoutine();
 
     std::cin.get();
     return 0;
