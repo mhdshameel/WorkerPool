@@ -95,10 +95,17 @@ TEST(WorkerPoolTests, PoolThreadSafetyTest1)
         auto test = [&counter, &pool, &N] {
             for (int i = 0; i < N; i++)
             {
-                pool.AddTaskForExecution([&counter] {
-                    counter++;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                    });
+                try
+                {
+                    pool.AddTaskForExecution([&counter] {
+                        counter++;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        });
+                }
+                catch (const std::exception& ex)
+                {
+                    std::cerr << ex.what();
+                }
             }
         };
 
@@ -107,8 +114,9 @@ TEST(WorkerPoolTests, PoolThreadSafetyTest1)
             pool.AddTaskForExecution(test);
         }
     }
-
-    EXPECT_EQ(counter, N * N);
+    
+    //should have thrown std::runtime_error 
+    EXPECT_NE(counter, N * N);
 }
 
 TEST(WorkerPoolTests, FuturesWaitTests)
@@ -149,4 +157,43 @@ TEST(WorkerPoolTests, 1000ThreadsTest)
     }
 
     EXPECT_EQ(counter, N);
+}
+
+
+TEST(WorkerPoolTests, AddTaskAfterStoppingAllThreads)
+{
+    std::atomic<int> counter(0);
+    int except_count{ 0 };
+    WorkerPool* ptr_pool;
+    std::thread enque_thread;
+
+    {
+        WorkerPool pool(3);
+        ptr_pool = &pool;
+
+        //wait for threads to launch
+        while (!pool.AreAllWorkersAvailable()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        enque_thread = std::thread([&] {
+            for (int i = 0; i < 10; i++)
+            {
+                try
+                {
+                    pool.AddTaskForExecution([&counter] {
+                        counter++;
+                        });
+                }
+                catch (const std::exception& ex)
+                {
+                    except_count++;
+                }
+            }
+        });
+    }
+    //enque_thread will try to add tasks after the poo l is stopped
+
+    enque_thread.join();
+
+    EXPECT_FALSE(counter, 10);
+    EXPECT_GT(except_count, 0);
 }

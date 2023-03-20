@@ -66,6 +66,10 @@ namespace ms
 		* */
 		std::future<void> AddTaskForExecution(Task&& task_to_run, Task &&callback_when_complete = Task{})
 		{
+			// don't allow enqueueing after stopping the pool
+			if (cancel_flag)
+				throw std::runtime_error("enqueue on stopped WorkerPool");
+
 			std::promise<void> task_promise;
 			auto fut = task_promise.get_future();
 			std::unique_lock lk(tq_mx);
